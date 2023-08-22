@@ -3,7 +3,7 @@ services:
   front:
     build:
       context: ./auth-front
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     ports:
       - "3000:3000"
     environment:
@@ -29,7 +29,7 @@ services:
       - db
 
   db:
-    image: postgres
+    image: postgres:15.4-alpine
     restart: always
     ports:
       - 5432:5432
