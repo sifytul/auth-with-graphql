@@ -35,18 +35,6 @@ async function main() {
     }
   }
 
-  // await AppDataSource.createQueryBuilder().delete().from(User).execute();
-  // let hashed = await hash("sifytul@gmail.com", 12);
-  // await AppDataSource.createQueryBuilder()
-  //   .insert()
-  //   .into(User)
-  //   .values({
-  //     name: "sifytul",
-  //     email: "sifytul@gmail.com",
-  //     password: hashed,
-  //     isAdmin: true,
-  //   })
-  //   .execute();
   // global middleware in use
   app.use(
     cors({
