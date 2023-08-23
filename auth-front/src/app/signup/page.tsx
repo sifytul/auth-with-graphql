@@ -9,15 +9,12 @@ const SignUp = () => {
   const {
     register,
     handleSubmit,
-    watch,
     formState: { errors },
     setError,
   } = useForm();
 
   const [registerUser] = useRegisterMutation();
   const onSubmit = async (data: any) => {
-    console.log("form submitted");
-
     const response = await registerUser({
       variables: data,
     });
@@ -32,7 +29,6 @@ const SignUp = () => {
       return;
     }
     setAccessToken(response.data?.createUser.success?.accessToken || "");
-    console.log(response);
     router.push("/");
   };
   return (

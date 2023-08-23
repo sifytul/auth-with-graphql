@@ -2,13 +2,10 @@
 import { useLogoutMutation, useMeQuery } from "@/__generated__/graphql";
 import { setAccessToken } from "@/accessToken";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 const NavBar = () => {
-  const router = useRouter();
-  let { data, error } = useMeQuery();
+  let { data } = useMeQuery();
   let [logout, { client }] = useLogoutMutation();
-  console.log("me data => ", data);
 
   return (
     <div className="navbar bg-red-100">
@@ -36,6 +33,11 @@ const NavBar = () => {
               tabIndex={0}
               className="mt-3 z-[1] p-2 shadow menu menu-sm dropdown-content bg-base-100 rounded-box w-52"
             >
+              <li>
+                <a className="justify-between text-teal-500 font-semibold text-2xl">
+                  {data.me.name}
+                </a>
+              </li>
               <li>
                 <a className="justify-between">
                   Profile
