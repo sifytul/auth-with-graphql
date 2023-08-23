@@ -17,12 +17,6 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
-export type CreateUserResponse = {
-  __typename?: 'CreateUserResponse';
-  errors?: Maybe<Array<FieldError>>;
-  success?: Maybe<SuccessResponse>;
-};
-
 export type FieldError = {
   __typename?: 'FieldError';
   field: Scalars['String']['output'];
@@ -32,10 +26,11 @@ export type FieldError = {
 export type Mutation = {
   __typename?: 'Mutation';
   changePassword: UserResponse;
-  createUser: CreateUserResponse;
+  createUser: UserResponse;
   forgotPassword: Scalars['Boolean']['output'];
   login: UserResponse;
   logout: Scalars['Boolean']['output'];
+  revokeRefreshTokenForUser: Scalars['Boolean']['output'];
 };
 
 
@@ -62,17 +57,16 @@ export type MutationLoginArgs = {
   password: Scalars['String']['input'];
 };
 
+
+export type MutationRevokeRefreshTokenForUserArgs = {
+  email: Scalars['String']['input'];
+};
+
 export type Query = {
   __typename?: 'Query';
   getAllUsers: Array<User>;
   hello: Scalars['String']['output'];
   me?: Maybe<User>;
-};
-
-export type SuccessResponse = {
-  __typename?: 'SuccessResponse';
-  accessToken: Scalars['String']['output'];
-  ok: Scalars['Boolean']['output'];
 };
 
 export type User = {
@@ -146,7 +140,7 @@ export type RegisterMutationVariables = Exact<{
 }>;
 
 
-export type RegisterMutation = { __typename?: 'Mutation', createUser: { __typename?: 'CreateUserResponse', errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null, success?: { __typename?: 'SuccessResponse', accessToken: string, ok: boolean } | null } };
+export type RegisterMutation = { __typename?: 'Mutation', createUser: { __typename?: 'UserResponse', data?: { __typename?: 'meResponse', accessToken: string, user: { __typename?: 'User', id: number, isAdmin: boolean, name: string, email: string, tokenVersion: number } } | null, errors?: Array<{ __typename?: 'FieldError', field: string, message: string }> | null } };
 
 
 export const GetAllUsersDocument = gql`
@@ -402,13 +396,19 @@ export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, L
 export const RegisterDocument = gql`
     mutation Register($name: String!, $password: String!, $email: String!) {
   createUser(name: $name, password: $password, email: $email) {
+    data {
+      accessToken
+      user {
+        id
+        isAdmin
+        name
+        email
+        tokenVersion
+      }
+    }
     errors {
       field
       message
-    }
-    success {
-      accessToken
-      ok
     }
   }
 }

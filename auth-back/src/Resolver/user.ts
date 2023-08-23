@@ -16,7 +16,7 @@ import { MyContext } from "../types/myContext";
 import { sendMail } from "../utils/sendEmail";
 import { sendRefreshToken } from "../utils/sendRefreshToken";
 import { createAccessToken } from "../utils/tokenCreator";
-import { CreateUserResponse, UserResponse } from "./types/UserRsponseType";
+import { UserResponse } from "./types/UserRsponseType";
 
 @Resolver()
 export class UserResolver {
@@ -34,13 +34,13 @@ export class UserResolver {
     return true;
   }
 
-  @Mutation(() => CreateUserResponse)
+  @Mutation(() => UserResponse)
   async createUser(
     @Arg("email") email: string,
     @Arg("password") password: string,
     @Arg("name") name: string,
     @Ctx() { res }: MyContext
-  ) {
+  ): Promise<UserResponse> {
     if (!email || !password) {
       return {
         errors: [
@@ -87,9 +87,10 @@ export class UserResolver {
       tokenVersion: createdUser.tokenVersion,
     };
     sendRefreshToken(res, tokenPayload);
+
     return {
-      success: {
-        ok: true,
+      data: {
+        user: createdUser,
         accessToken: createAccessToken(tokenPayload),
       },
     };

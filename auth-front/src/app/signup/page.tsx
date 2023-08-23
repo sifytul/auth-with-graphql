@@ -1,5 +1,9 @@
 "use client";
-import { useRegisterMutation } from "@/__generated__/graphql";
+import {
+  MeDocument,
+  MeQuery,
+  useRegisterMutation,
+} from "@/__generated__/graphql";
 import { setAccessToken } from "@/accessToken";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -17,6 +21,18 @@ const SignUp = () => {
   const onSubmit = async (data: any) => {
     const response = await registerUser({
       variables: data,
+      update: (store, { data }) => {
+        if (!data) {
+          return null;
+        }
+        store.writeQuery<MeQuery>({
+          query: MeDocument,
+          data: {
+            __typename: "Query",
+            me: data.createUser.data?.user,
+          },
+        });
+      },
     });
     if (
       response.data?.createUser.errors &&
@@ -28,7 +44,7 @@ const SignUp = () => {
       });
       return;
     }
-    setAccessToken(response.data?.createUser.success?.accessToken || "");
+    setAccessToken(response.data?.createUser.data?.accessToken || "");
     router.push("/");
   };
   return (
@@ -62,7 +78,7 @@ const SignUp = () => {
           <p className="">Password</p>
           <input
             {...register("password")}
-            type="text"
+            type="password"
             placeholder="Type here"
             className="input input-bordered w-full max-w-sm"
           />
