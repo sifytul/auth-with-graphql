@@ -5,18 +5,18 @@ const transporter = nodemailer.createTransport({
   port: 465,
   secure: true,
   auth: {
-    user: "sifytulkarim37@gmail.com",
-    pass: "kxzfsfjnhrhbnnmx",
+    user: process.env.NODEMAILER_USER,
+    pass: process.env.NODEMAILER_USER,
   },
 });
 
 export async function sendMail(to: string, resetToken: string) {
-  const host = process.env.FRONTEND_URL + "/forgotPassword/";
+  const resetLink = process.env.FRONTEND_URL + "/forgotPassword/" + resetToken;
   const info = await transporter.sendMail({
-    from: "sifytulkarim37@gmail.com",
+    from: process.env.NODEMAILER_USER,
     to,
     subject: "Docker-Auth password recovery link",
-    html: `<h1>Please click the link to reset your password===>"</h1><a>${host}${resetToken}</a>`,
+    html: `<h4>Please click the link to reset your password===>"</h4><a href=${resetLink}}>Click here</a><span> to reset</span>`,
   });
 
   return info;
