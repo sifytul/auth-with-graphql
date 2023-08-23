@@ -49,6 +49,7 @@ async function main() {
     return res.status(200).json({ success: true, message: "Server is Up" });
   });
 
+  // generate refresh Token
   app.post("/refresh_token", async (req: Request, res: Response) => {
     const cookie = req.cookies;
     if (!cookie) {
@@ -73,17 +74,19 @@ async function main() {
       return res.status(401).json({ ok: false, accessToken: "" });
     }
 
-    sendRefreshToken(res, {
+    if (verified.tokenVersion !== isUserExisted.tokenVersion) {
+      return res.status(401).json({ ok: false, accessToken: "" });
+    }
+    let tokenPayload = {
       userId: isUserExisted.id,
       isAdmin: isUserExisted.isAdmin,
-    });
+      tokenVersion: isUserExisted.tokenVersion,
+    };
+    sendRefreshToken(res, tokenPayload);
 
     return res.status(200).json({
       ok: true,
-      accessToken: createAccessToken({
-        userId: isUserExisted.id,
-        isAdmin: isUserExisted.isAdmin,
-      }),
+      accessToken: createAccessToken(tokenPayload),
     });
   });
 
