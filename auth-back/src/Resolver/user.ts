@@ -3,9 +3,7 @@ import { JwtPayload, decode, sign, verify } from "jsonwebtoken";
 import {
   Arg,
   Ctx,
-  Field,
   Mutation,
-  ObjectType,
   Query,
   Resolver,
   UseMiddleware,
@@ -17,58 +15,23 @@ import { isAuth } from "../middleware/isAuth";
 import { MyContext } from "../types/myContext";
 import { sendMail } from "../utils/sendEmail";
 import { sendRefreshToken } from "../utils/sendRefreshToken";
-import { createAccessToken, createRefreshToken } from "../utils/tokenCreator";
-
-@ObjectType()
-class meResponse {
-  @Field()
-  accessToken: string;
-
-  @Field(() => User)
-  user: User;
-}
-
-@ObjectType()
-class UserResponse {
-  @Field(() => meResponse, { nullable: true })
-  data?: meResponse;
-
-  @Field(() => [FieldError], { nullable: true })
-  errors?: FieldError[];
-}
-
-@ObjectType()
-class FieldError {
-  @Field()
-  field: string;
-
-  @Field()
-  message: string;
-}
-
-@ObjectType()
-class SuccessResponse {
-  @Field(() => Boolean)
-  ok: boolean;
-
-  @Field(() => String)
-  accessToken: string;
-}
-
-@ObjectType()
-class CreateUserResponse {
-  @Field(() => [FieldError], { nullable: true })
-  errors?: FieldError[];
-
-  @Field(() => SuccessResponse, { nullable: true })
-  success?: SuccessResponse;
-}
+import { createAccessToken } from "../utils/tokenCreator";
+import { CreateUserResponse, UserResponse } from "./types/UserRsponseType";
 
 @Resolver()
 export class UserResolver {
   @Query(() => String)
   hello() {
     return "hello world";
+  }
+
+  @Mutation(() => Boolean)
+  async revokeRefreshTokenForUser(
+    @Arg("email") email: string,
+    @Ctx() {}: MyContext
+  ): Promise<boolean> {
+    AppDataSource.getRepository(User).increment({ email }, "tokenVersion", 1);
+    return true;
   }
 
   @Mutation(() => CreateUserResponse)
@@ -118,25 +81,16 @@ export class UserResolver {
         ],
       };
     }
-    res.cookie(
-      "jid",
-      createRefreshToken({
-        userId: createdUser.id,
-        isAdmin: createdUser.isAdmin,
-      }),
-      {
-        httpOnly: true,
-        maxAge: 1024 * 60 * 60 * 24 * 3,
-        secure: false,
-      }
-    );
+    const tokenPayload = {
+      userId: createdUser.id,
+      isAdmin: createdUser.isAdmin,
+      tokenVersion: createdUser.tokenVersion,
+    };
+    sendRefreshToken(res, tokenPayload);
     return {
       success: {
         ok: true,
-        accessToken: createAccessToken({
-          userId: createdUser.id,
-          isAdmin: createdUser.isAdmin,
-        }),
+        accessToken: createAccessToken(tokenPayload),
       },
     };
   }
@@ -181,17 +135,21 @@ export class UserResolver {
         ],
       };
     }
-    sendRefreshToken(res, {
+    await AppDataSource.getRepository(User).increment(
+      { email },
+      "tokenVersion",
+      1
+    );
+    let tokenPayload = {
       userId: isUserExist.id,
       isAdmin: isUserExist.isAdmin,
-    });
+      tokenVersion: isUserExist.tokenVersion + 1,
+    };
+    sendRefreshToken(res, tokenPayload);
     return {
       data: {
         user: isUserExist,
-        accessToken: createAccessToken({
-          userId: isUserExist.id,
-          isAdmin: isUserExist.isAdmin,
-        }),
+        accessToken: createAccessToken(tokenPayload),
       },
     };
   }
@@ -223,10 +181,8 @@ export class UserResolver {
       }
     );
     try {
-      const info = await sendMail(email, forgotPasswordToken);
-      console.log("info => ", info);
+      await sendMail(email, forgotPasswordToken);
     } catch (err) {
-      console.log("nodemailer error => ", err);
       throw new Error(err.message);
     }
     return true;
@@ -256,17 +212,16 @@ export class UserResolver {
       .returning("*")
       .execute();
     let updatedUserField = updatedUser.raw[0];
-    sendRefreshToken(res, {
+    let tokenPayload = {
       userId: updatedUserField.id,
       isAdmin: updatedUserField.isAdmin,
-    });
+      tokenVersion: updatedUserField.tokenVersion,
+    };
+    sendRefreshToken(res, tokenPayload);
     return {
       data: {
         user: updatedUserField,
-        accessToken: createAccessToken({
-          userId: updatedUserField.id,
-          isAdmin: updatedUserField.isAdmin,
-        }),
+        accessToken: createAccessToken(tokenPayload),
       },
     };
   }
