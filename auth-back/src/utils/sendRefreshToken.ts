@@ -3,7 +3,10 @@ import { createRefreshToken } from "./tokenCreator";
 
 export const sendRefreshToken = (
   res: Response,
-  payload: { userId: number; isAdmin: boolean; tokenVersion: number } | string
+  payload:
+    | { userId: number; isAdmin: boolean; tokenVersion: number }
+    | string
+    | { isGuest: boolean }
 ) => {
   if (typeof payload === "string") {
     res.cookie("jid", "", {
