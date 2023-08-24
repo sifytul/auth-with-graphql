@@ -1,0 +1,13 @@
+mutation UpdateProfile($name: String!) {
+  updateProfile(name: $name) {
+    data {
+      user {
+        email
+        id
+        isAdmin
+        name
+        tokenVersion
+      }
+    }
+  }
+}

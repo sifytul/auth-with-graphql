@@ -6,6 +6,7 @@ mutation Login($password: String!, $email: String!) {
         email
         id
         name
+        isAdmin
       }
     }
     errors {

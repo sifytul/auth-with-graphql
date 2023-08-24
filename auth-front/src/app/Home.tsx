@@ -1,6 +1,7 @@
 import { setAccessToken } from "@/accessToken";
 import NavBar from "@/components/Navbar";
 import { useEffect, useState } from "react";
+import Loading from "./loading";
 
 const Home = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
@@ -17,11 +18,7 @@ const Home = ({ children }: { children: React.ReactNode }) => {
   }, []);
 
   if (loading) {
-    return (
-      <div className="h-screen w-full flex justify-center items-center">
-        <div className="loading loading-ring loading-lg"></div>;
-      </div>
-    );
+    return <Loading />;
   }
   return (
     <div>

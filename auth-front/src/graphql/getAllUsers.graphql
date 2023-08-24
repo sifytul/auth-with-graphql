@@ -3,5 +3,6 @@ query GetAllUsers {
     email
     id
     name
+    isAdmin
   }
 }

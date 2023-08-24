@@ -2,8 +2,10 @@
 import { useLogoutMutation, useMeQuery } from "@/__generated__/graphql";
 import { setAccessToken } from "@/accessToken";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 const NavBar = () => {
+  const router = useRouter();
   let { data } = useMeQuery();
   let [logout, { client }] = useLogoutMutation();
 
@@ -39,13 +41,9 @@ const NavBar = () => {
                 </a>
               </li>
               <li>
-                <a className="justify-between">
-                  Profile
-                  <span className="badge">New</span>
-                </a>
-              </li>
-              <li>
-                <a>Settings</a>
+                <Link href={"/editProfile"} className="justify-between">
+                  Edit Profile<span>✏️</span>
+                </Link>
               </li>
               <li>
                 <a
@@ -53,6 +51,7 @@ const NavBar = () => {
                     await logout();
                     setAccessToken("");
                     await client.resetStore();
+                    router.push("/");
                   }}
                 >
                   Logout

@@ -9,24 +9,24 @@ const LogIn = () => {
   const router = useRouter();
   const {
     register,
-    formState: { errors, isLoading },
+    formState: { errors },
     handleSubmit,
     setError,
   } = useForm();
-  const [login] = useLoginMutation();
+  const [login, { client }] = useLoginMutation();
 
   const onSubmit = async (data: any) => {
     const response = await login({
       variables: data,
-      update: (store, { data }) => {
+      update: (_, { data }) => {
         if (!data) {
           return null;
         }
-        store.writeQuery<MeQuery>({
+        client.writeQuery<MeQuery>({
           query: MeDocument,
           data: {
             __typename: "Query",
-            me: data.login.data?.user as any,
+            me: data.login.data?.user,
           },
         });
       },
