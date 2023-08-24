@@ -21,8 +21,8 @@ class Success {
 
 @ObjectType()
 export class meResponse {
-  @Field()
-  accessToken: string;
+  @Field(() => String, { nullable: true })
+  accessToken?: string;
 
   @Field(() => User)
   user: User;

@@ -1,8 +1,10 @@
 import { compare, hash } from "bcryptjs";
+import { GraphQLError } from "graphql";
 import { JwtPayload, decode, sign, verify } from "jsonwebtoken";
 import {
   Arg,
   Ctx,
+  Int,
   Mutation,
   Query,
   Resolver,
@@ -227,11 +229,75 @@ export class UserResolver {
     };
   }
 
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  async updatePassword(
+    @Arg("oldPassword") oldPassword: string,
+    @Arg("newPassword") newPassword: string,
+    @Ctx() { payload }: MyContext
+  ) {
+    if (!oldPassword || !newPassword) {
+      throw new Error("Field cannot be empty");
+    }
+
+    let existedUser = await User.findOne({ where: { id: payload?.userId } });
+    let isPasswordMatched = await compare(
+      oldPassword,
+      existedUser?.password as string
+    );
+    if (!isPasswordMatched) {
+      throw new Error("wrong password");
+    }
+    await User.update(
+      { id: existedUser?.id },
+      { password: await hash(newPassword, 12) }
+    );
+    return true;
+  }
+
+  @Mutation(() => UserResponse)
+  @UseMiddleware(isAuth)
+  async updateProfile(
+    @Arg("name") name: string,
+    @Ctx() { payload }: MyContext
+  ): Promise<UserResponse> {
+    if (!name) {
+      throw new GraphQLError("Field cannot be empty");
+    }
+    let user = await AppDataSource.createQueryBuilder()
+      .update(User)
+      .set({ name: name })
+      .where("id = :id", { id: payload?.userId })
+      .returning("*")
+      .execute();
+    return {
+      data: {
+        user: user.raw[0],
+      },
+    };
+  }
+
   @Query(() => [User])
   @UseMiddleware(isAuth)
   @UseMiddleware(isAdmin)
   async getAllUsers() {
     return User.find();
+  }
+
+  @Mutation(() => Boolean)
+  @UseMiddleware(isAuth)
+  @UseMiddleware(isAdmin)
+  async deleteUser(@Arg("userId", () => Int) userId: number) {
+    if (!userId || typeof userId !== "number") {
+      throw new GraphQLError("Wrong userId");
+    }
+
+    try {
+      await User.delete({ id: userId });
+    } catch (err) {
+      throw new GraphQLError(err.message);
+    }
+    return true;
   }
 
   @Query(() => User, { nullable: true })
@@ -241,12 +307,14 @@ export class UserResolver {
       return null;
     }
 
-    const payload = decode(token) as JwtPayload;
+    const payload = decode(token.split(" ")[1]) as JwtPayload;
 
+    console.log(payload);
     const user = await User.findOne({ where: { id: payload.userId } });
     if (!user) {
       throw new Error("Not authorized");
     }
+    console;
     return user;
   }
 }
